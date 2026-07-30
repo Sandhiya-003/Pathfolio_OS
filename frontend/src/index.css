@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: theme('colors.ink.600');
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink-900 text-parchment font-sans antialiased;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(236,231,218,0.035) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  ::selection {
+    background: rgba(201,162,78,0.35);
+  }
+  :focus-visible {
+    outline: 2px solid #C9A24E;
+    outline-offset: 2px;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2B2F3F;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3A3F52;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-ink-800 border border-ink-600 rounded-xl shadow-card;
+  }
+  .stamp {
+    @apply font-mono text-[10px] uppercase tracking-[0.14em];
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-seal-gold text-ink-950 font-sans font-semibold text-sm px-4 py-2.5 transition hover:brightness-110 active:brightness-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-ink-500 bg-ink-800 text-parchment font-sans font-medium text-sm px-4 py-2.5 transition hover:border-seal-gold/60 hover:text-seal-gold disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .input-field {
+    @apply w-full rounded-lg bg-ink-900 border border-ink-500 text-parchment placeholder-parchment-muted px-3.5 py-2.5 text-sm outline-none transition focus:border-seal-gold/70;
+  }
+}
+@layer utilities {
+  .font-serif-title {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+  .font-brand {
+    font-family: 'Cinzel', serif;
+  }
+  .font-sans-clean {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.4s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
