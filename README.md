@@ -49,8 +49,3 @@ feature above is scoped to the signed-in user; one account can never see another
 enforced at the database layer, not just hidden in the UI.
 
 ---
-
-## 🖥️ Screenshots
-
-> *Add screenshots or a demo GIF here — Dashboard, Ingest, Knowledge Map, and the Ask assistant
-> make the strongest impression.*
