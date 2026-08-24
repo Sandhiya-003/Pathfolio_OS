@@ -21,11 +21,12 @@ class Settings(BaseSettings):
 
     # CORS & Frontend URLs
     FRONTEND_URL: str = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-    ALLOWED_ORIGINS: List[str] = (
-        _parse_origins(os.environ["ALLOWED_ORIGINS"])
-        if os.environ.get("ALLOWED_ORIGINS")
-        else ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"]
-    )
+    ALLOWED_ORIGINS: List[str] = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+]
 
     # Storage Paths
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
