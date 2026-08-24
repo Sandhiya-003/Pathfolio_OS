@@ -44,6 +44,25 @@ class UploadService:
                 detail=f"File type not supported. Allowed: {', '.join(ALLOWED_TYPES)}"
             )
         return file_ext
+    def _build_search_text(self, title: str, category: str, skills: list,
+                           organizations: list, date: str, extracted_text: str) -> str:
+        """
+        Build the text that actually gets embedded for search -- NOT the raw
+        extracted_text directly. The embedding model has a ~256 token limit;
+        anything past that is silently truncated. Putting title/category/skills
+        first guarantees the most identifying, distinguishing information is
+        always within the embedded window, regardless of how long the document
+        is or where that information falls in the raw text.
+        """
+        parts = [f"Title: {title}", f"Category: {category}"]
+        if skills:
+            parts.append(f"Skills: {', '.join(skills)}")
+        if organizations:
+            parts.append(f"Organizations: {', '.join(organizations)}")
+        if date:
+            parts.append(f"Date: {date}")
+        parts.append(extracted_text[:1500])
+        return "\n".join(parts)
 
     def _validate_size(self, content: bytes) -> None:
         max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
@@ -87,18 +106,17 @@ class UploadService:
             logger.info(f"📁 Uploaded file: {file.filename}")
 
             extraction_result = self.extraction.extract(file_path)
-            extracted_text = extraction_result.get('text', '')
+            extracted_text = extraction_result.get("text", "")
 
             if not extracted_text.strip():
                 return {
                     "success": False,
                     "message": "Could not extract text from document. It might be empty or scanned.",
-                    "document_id": doc_id
+                    "document_id": doc_id,
                 }
 
             duplicate = self._find_duplicate(user_id, extracted_text)
             if duplicate:
-                # Clean up the redundant file we just wrote before returning
                 if os.path.exists(file_path):
                     os.remove(file_path)
                 return {
@@ -114,31 +132,44 @@ class UploadService:
             document = {
                 "id": doc_id,
                 "user_id": user_id,
-                "title": doc_data['title'],
-                "category": doc_data['category'],
+                "title": doc_data["title"],
+                "category": doc_data["category"],
                 "file_type": file_ext[1:],
                 "file_path": file_path,
                 "original_filename": file.filename,
                 "extracted_text": extracted_text,
-                "skills": doc_data['skills'],
-                "organizations": doc_data['organizations'],
-                "date_extracted": doc_data['primary_date'],
+                "skills": doc_data["skills"],
+                "organizations": doc_data["organizations"],
+                "date_extracted": doc_data["primary_date"],
                 "description": description,
-                "embedding_id": doc_id
+                "embedding_id": doc_id,
             }
-
+            
             self.db.insert_document(document)
 
-            self.vector.add_document(
-                doc_id=doc_id,
-                text=extracted_text,
-                metadata={
-                    "title": document['title'],
-                    "category": document['category'],
-                    "skills": ",".join(document['skills']),
-                    "user_id": user_id
-                }
+            embedding_text = self._build_search_text(
+                doc_data['title'],
+                doc_data['category'],
+                doc_data['skills'],
+                doc_data['organizations'],
+                doc_data['primary_date'],
+                extracted_text,
             )
+
+            vector_indexed = self.vector.add_document(
+                doc_id=doc_id,
+                text=embedding_text,
+                metadata={
+                    "title": document["title"],
+                    "category": document["category"],
+                    "skills": ",".join(document["skills"]),
+                    "user_id": user_id,
+                },
+            )
+            if not vector_indexed:
+                logger.error(
+                    f"⚠️ Document {doc_id} saved to database but FAILED to index for search/chat"
+                )
 
             self.relationships.build_relationships(doc_id, doc_data)
 
@@ -149,11 +180,11 @@ class UploadService:
                 "message": "Document processed successfully!",
                 "document_id": doc_id,
                 "filename": file.filename,
-                "category": doc_data['category'],
-                "skills_found": doc_data['skills'],
-                "organizations_found": doc_data['organizations'],
-                "date_extracted": doc_data['primary_date'],
-                "processing_time": round(processing_time, 2)
+                "category": doc_data["category"],
+                "skills_found": doc_data["skills"],
+                "organizations_found": doc_data["organizations"],
+                "date_extracted": doc_data["primary_date"],
+                "processing_time": round(processing_time, 2),
             }
 
         except HTTPException:

@@ -42,6 +42,10 @@ coverage/
 Thumbs.db
 
 # Local app data
-backend/storage/uploads/
-backend/storage/processed/
-backend/storage/chroma_db/
+backend/app/storage/uploads/
+backend/app/storage/processed/
+backend/app/storage/chroma_db/
+
+# Local databases
+backend/portfolioos.db
+*.db

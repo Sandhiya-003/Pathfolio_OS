@@ -24,8 +24,8 @@ cp .env.example .env
 `.env`:
 ```
 JWT_SECRET_KEY=<a long random string>
-GROQ_API_KEY=<your key from https://console.groq.com/keys>
-GROQ_MODEL=llama-3.3-70b-versatile
+GEMINI_API_KEY=<your key from https://aistudio.google.com/app/apikey>
+GEMINI_MODEL=gemini-3.7-flash
 ```
 
 `JWT_SECRET_KEY` is required (accounts won't work without it). `GROQ_API_KEY` is optional —
@@ -37,7 +37,7 @@ Generate a JWT secret:
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Get a free Groq key at **console.groq.com/keys** (no credit card required).
+Create a Gemini API key in **Google AI Studio**.
 
 ## Run
 
@@ -54,7 +54,7 @@ pytest tests/ -v
 ```
 
 These are integration tests against the real app (register a throwaway user, upload a sample
-document, hit every endpoint). The Groq-dependent test mocks the LLM call, so the suite runs
+document, hit every endpoint). The Gemini-dependent test mocks the LLM call, so the suite runs
 without an API key or network access.
 
 ## Architecture

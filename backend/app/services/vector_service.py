@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional
 from app.db.chroma_db import chroma_client
 from app.services.embedding_service import embedding_service
+from app.core.config import settings
 from app.core.logger import logger
 
 class VectorService:
@@ -20,6 +21,7 @@ class VectorService:
             return self.chroma.add_document(
                 doc_id=doc_id,
                 text=text,
+                embedding=embedding.tolist(),
                 metadata={
                     **metadata,
                     "text_preview": text[:500]  # Store preview for display
@@ -31,24 +33,47 @@ class VectorService:
     
     def search(self, query: str, filters: Dict = None, limit: int = 10) -> List[Dict]:
         """
-        Semantic search across all documents
-        
-        Args:
-            query: Natural language search query
-            filters: Optional metadata filters
-            limit: Maximum results
-        
-        Returns:
-            List of matching documents with similarity scores
+        Semantic search across all documents, filtered to results that are
+        actually relevant -- not just "the closest N regardless of how far".
+
+        With a small archive, ChromaDB's n_results=limit will happily return
+        every document you own if you ask for more results than you have
+        documents, even if most of them have nothing to do with the query.
+        We fetch a wider pool, then keep only results above the similarity
+        threshold -- falling back to the single best match if nothing clears
+        the bar, so a genuine "nothing relevant" case doesn't look identical
+        to a broken search.
         """
         try:
-            results = self.chroma.search(
+            # Fetch a wider pool than requested so thresholding has something
+            # real to filter, rather than being capped exactly at `limit`.
+            pool_size = max(limit * 3, 15)
+            query_embedding = self.embedding.encode_single(query)
+            raw = self.chroma.search(
                 query=query,
-                n_results=limit,
-                filters=filters
+                query_embedding=query_embedding.tolist(),
+                n_results=pool_size,
+                filters=filters,
             )
-            
-            return results.get('results', [])
+            results = raw.get('results', [])
+
+            # TEMPORARY DEBUG LOG -- remove once search relevance is confirmed working.
+            logger.info(
+                f"🔍 DEBUG search '{query}': "
+                f"{[(r.get('metadata', {}).get('title'), round(r.get('similarity_score', 0), 3)) for r in results]}"
+            )
+
+            relevant = [r for r in results if r.get('similarity_score', 0) >= settings.SIMILARITY_THRESHOLD]
+
+            if relevant:
+                return relevant[:limit]
+
+            if results:
+                fallback = results[0]
+                fallback["low_confidence"] = True
+                return [fallback]
+
+            return []
         except Exception as e:
             logger.error(f"❌ Search failed: {e}")
             return []

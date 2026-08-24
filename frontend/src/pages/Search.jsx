@@ -136,11 +136,19 @@ export default function Search() {
               className="space-y-5"
             >
               <div className="flex items-center justify-between">
-                <p className="text-sm text-parchment-muted">
-                  {result.total_results} result{result.total_results === 1 ? "" : "s"} for{" "}
-                  <span className="text-parchment">"{result.query}"</span>
-                  <span className="stamp ml-2">{result.processing_time_ms}ms</span>
-                </p>
+                {result.low_confidence ? (
+                  <p className="text-sm text-seal-coral">
+                    Nothing matched well — showing the closest document I could find for{" "}
+                    <span className="text-parchment">"{result.query}"</span>
+                    <span className="stamp ml-2">{result.processing_time_ms}ms</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-parchment-muted">
+                    {result.total_results} result{result.total_results === 1 ? "" : "s"} for{" "}
+                    <span className="text-parchment">"{result.query}"</span>
+                    <span className="stamp ml-2">{result.processing_time_ms}ms</span>
+                  </p>
+                )}
               </div>
 
               {result.total_results === 0 && (

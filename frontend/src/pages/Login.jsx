@@ -1,5 +1,5 @@
 // frontend/src/pages/Login.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import ParticleCanvas from '../components/ParticleCanvas';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,13 @@ const Login = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('auth') === 'error') {
+      setError(params.get('message') || 'OAuth sign-in failed. Please try again.');
+    }
+  }, [location.search]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

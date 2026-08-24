@@ -33,20 +33,26 @@ class ChromaDBClient:
             except Exception:
                 self.collection = self.client.create_collection(
                     name="portfolio_documents",
-                    metadata={"description": "PortfolioOS document embeddings"}
+                    metadata={
+                        "description": "PortfolioOS document embeddings",
+                        "hnsw:space": "cosine"
+                    }
                 )
                 logger.info("✅ Created new ChromaDB collection")
         except Exception as e:
             logger.error(f"❌ Failed to initialize ChromaDB: {e}")
             raise
     
-    def add_document(self, doc_id: str, text: str, metadata: Dict[str, Any]) -> bool:
+    def add_document(
+        self, doc_id: str, text: str, metadata: Dict[str, Any], embedding: List[float]
+    ) -> bool:
         """Add a document embedding to ChromaDB"""
         try:
             self.collection.add(
                 ids=[doc_id],
                 documents=[text],
-                metadatas=[metadata]
+                metadatas=[metadata],
+                embeddings=[embedding],
             )
             logger.info(f"✅ Added document {doc_id} to vector DB")
             return True
@@ -54,7 +60,9 @@ class ChromaDBClient:
             logger.error(f"❌ Failed to add document to ChromaDB: {e}")
             return False
     
-    def search(self, query: str, n_results: int = 10, filters: Dict = None) -> Dict:
+    def search(
+        self, query: str, query_embedding: List[float], n_results: int = 10, filters: Dict = None
+    ) -> Dict:
         """
         Semantic search using vector similarity
         
@@ -71,8 +79,16 @@ class ChromaDBClient:
             if filters:
                 where_clause = filters
             
+            indexed_count = self.collection.count()
+            if not indexed_count:
+                return {"success": True, "results": [], "total": 0}
+
+            # Chroma rejects a requested result count larger than the index.
+            # This is common for a new portfolio, where VectorService requests
+            # a wider candidate pool before applying its relevance threshold.
+            n_results = min(n_results, indexed_count)
             results = self.collection.query(
-                query_texts=[query],
+                query_embeddings=[query_embedding],
                 n_results=n_results,
                 where=where_clause,
                 include=["documents", "metadatas", "distances"]

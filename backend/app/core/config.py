@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # AI/ML Settings
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     EMBEDDING_DIMENSION: int = 384
-    SIMILARITY_THRESHOLD: float = 0.75
+    SIMILARITY_THRESHOLD: float = float(os.environ.get("SIMILARITY_THRESHOLD", "0.35"))
     MAX_SEARCH_RESULTS: int = 10
 
     # Document Categories
@@ -83,11 +83,11 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str = os.environ.get("GITHUB_CLIENT_SECRET", "")
     GITHUB_REDIRECT_URI: str = os.environ.get("GITHUB_REDIRECT_URI", "http://localhost:8000/auth/github/callback")
 
-    # Groq LLM
-    GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "")
-    GROQ_MODEL: str = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
-    GROQ_MAX_TOKENS: int = 800
-    GROQ_TEMPERATURE: float = 0.3
+    # Gemini LLM
+    GEMINI_API_KEY: str = os.environ.get("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash")
+    GEMINI_MAX_TOKENS: int = 800
+    GEMINI_TEMPERATURE: float = 0.3
     CHAT_CONTEXT_DOCS: int = 6
 
     class Config:
